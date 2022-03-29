@@ -10,9 +10,6 @@ eta                     = 1; %1.015;
 sigma                   = 1;
 C                       = 1; % for the box constraint (high side)
 
-% Select one of the TOP-ADMM step-sizes manually corresponding to the equivalent
-% methods
-select__top_admm_problem_reformulation = {'a'; 'b'; 'c'; 'd'; 'e'}; 
 
 
 %% Derived parameters and dataset generation
@@ -126,71 +123,43 @@ for ii = 1:length(svm_optimization_scheme)
             
         case 'top_admm'
             
-            for jj = 1:numel(select__top_admm_problem_reformulation)
+            tau      = 0.0175/4.99;
+            
+            
+            x  = zeros(length(trainClass),1);
+            y  = x;
+            z  = x;
+            
+            K_bar   = diag(trainClass) * K * diag(trainClass);
+            grad_h  = @(x) K_bar * x - 1;
+            obj_fun = @(x) 0.5*x'*K_bar*x - sum(x);
+            
+            objective_val{jj} = zeros(1, nrof_topaddm_iter);
+            
+            for kk = 1:nrof_topaddm_iter
                 
-                switch lower(select__top_admm_problem_reformulation{jj})
-                    case 'a'
-                        tau           = 0.0175;
-                        vartheta      = 0.0;
-                    case 'b'
-                        tau           = 0;
-                        vartheta      = 0.0125;
-                    case 'c'
-                        tau           = 0.0175;
-                        vartheta      = 0.0175;
-                    case 'd'
-                        tau           =  0.0175;
-                        vartheta      = -0.0075;
-                    case 'e'
-                        tau           = -0.001;
-                        vartheta      = 0.01;
-                    otherwise
-                        error('Unknown problem formulation');
-                end
+                % z update
+                z_ = (x - tau * grad_h(z) + y/rho);
+                z  = project_hyperplane_constraint(z_, trainClass, 0);
                 
-                if 0 % if you increase C then increase stepsize appropriately
-                    tau      = tau*1.025;
-                    vartheta = vartheta*1.0;
-                elseif 1
-                    tau      = tau/4.99;
-                    vartheta = vartheta/4.95;
-                end
+                % x update
+                x_ = z - y/rho;
+                x  = project_box_constraint(x_, 0, C);
                 
-                x  = zeros(length(trainClass),1);
-                y  = x;
-                z  = x;
+                % y update
+                y  = y + eta*rho*(x - z);
                 
-                K_bar   = diag(trainClass) * K * diag(trainClass);
-                grad_h  = @(x) K_bar * x - 1;
-                obj_fun = @(x) 0.5*x'*K_bar*x - sum(x);
+                % objective value at the given iteration
+                objective_val{jj}(kk) = obj_fun(z);
                 
-                objective_val{jj} = zeros(1, nrof_topaddm_iter);
-                
-                for kk = 1:nrof_topaddm_iter
-                    
-                    % z update
-                    z_ = (x - tau * grad_h(z) + y/rho);
-                    z  = project_hyperplane_constraint(z_, trainClass, 0);
-                    
-                    % x update
-                    x_ = z - vartheta *  grad_h(x) - y/rho;
-                    x  = project_box_constraint(x_, 0, C);
-                    
-                    % y update
-                    y  = y + eta*rho*(x - z);
-                    
-                    % objective value at the given iteration
-                    objective_val{jj}(kk) = obj_fun(z);
-                    
-                    % Training accuracy
-                    MyAcc_train       = kernel_svm_classification_test(x, C, K, K, trainClass, trainClass);
-                    % Test data
-                    MyAcc_test        = kernel_svm_classification_test(x, C, K, KK, trainClass, testClass);
-                    test_accuracy_val(kk)  = MyAcc_test;
-                end
-                legend_str{jj}    = sprintf('TOP-ADMM (\\tau=%1.4f, \\vartheta=%1.4f): [%2.2f%%; %2.2f%%]', tau, vartheta, MyAcc_train*100, MyAcc_test*100);
-                
+                % Training accuracy
+                MyAcc_train       = kernel_svm_classification_test(x, C, K, K, trainClass, trainClass);
+                % Test data
+                MyAcc_test        = kernel_svm_classification_test(x, C, K, KK, trainClass, testClass);
+                test_accuracy_val(kk)  = MyAcc_test;
             end
+            legend_str{jj}    = sprintf('TOP-ADMM (\\tau=%1.4f): [%2.2f%%; %2.2f%%]', tau, MyAcc_train*100, MyAcc_test*100);
+            
         otherwise
             error('Unknown method');
             
