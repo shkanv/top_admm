@@ -1,4 +1,4 @@
-function [z, history] = distr_l1_logreg_topadmm(A, b, mu, N, rho, alpha, gamma, step_size__x_m, step_size__z)
+function [z, history] = distr_l1_logreg_topadmm(A, b, mu, N, rho, alpha, gamma, step_size__z)
 % distr_l1_logreg   Solve distributed L1 regularized logistic regression 
 %
 % [x, history] = distr_l1_logreg_topadmm(A, b, mu, N, rho, alpha, gamma, step_size__x_m, step_size__z)
@@ -79,8 +79,8 @@ for k = 1:MAX_ITER
                    
         Ai              = A(1+(i-1)*m:i*m,:);
         bi              = b(1+(i-1)*m:i*m);        
-        grad_at_xoldi   = grad_log_reg(Ai, bi, xold(:,i)); % == g = C'*(exp(C*x)./(1 + exp(C*x)));        
-        x(:,i)          = z(:,i) - step_size__x_m.*grad_at_xoldi - y(:,i)/rho;
+        %grad_at_xoldi   = grad_log_reg(Ai, bi, xold(:,i)); % == g = C'*(exp(C*x)./(1 + exp(C*x)));        
+        x(:,i)          = z(:,i)  - y(:,i)/rho;
         
         iter_counter(i) = i;
     end    
