@@ -1,6 +1,6 @@
 # TOP-ADMM: A Three-Operator ADMM for Wireless Communications and Machine Learning
 
-## In the spirit to support reproducible research, we have shared MATLAB scripts for the two machine learning examples - see details in S. Kant et al., "TOP-ADMM: A Three-Operator ADMM for Wireless Communications and Machine Learning," under review, 2020.
+## In the spirit to support reproducible research, we have shared MATLAB scripts for the two machine learning examples - see details in S. Kant et al., "An Introduction to Three-Operator ADMM for Wireless Communications and Machine Learning," under review, 2022.
 
 ### Example 1: Distributed Sparse Logistic Regression - main script name: consensus_L1_logistic/run__distr_l1_logreg_example.m 
 
